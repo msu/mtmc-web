@@ -1,0 +1,307 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MSU MTMC-16</title>
+    <link rel="stylesheet" href="css/emulator.css">
+</head>
+<body>
+
+<main>
+    <!-- LEFT COLUMN: Controls, Registers, Memory -->
+    <div id="left">
+        <!-- Control Panel -->
+        <div class="panel" id="controls">
+            <div>
+                <div id="control-header">
+                    <span>m</span><span>s</span><span>u</span> &nbsp;<i>MTMC-16</i>
+                </div>
+                <div id="control-secondary">
+                    MonTana Mini-Computer
+                </div>
+                <div id="control-buttons">
+                    <label>
+                        <select id="speed-select" style="font-family: monospace;background-color: black;color: #ffcc00" name="speed">
+                            <option value="1">1 Hz</option>
+                            <option value="10">10 Hz</option>
+                            <option value="100">100 Hz</option>
+                            <option value="1000" selected>1 Khz</option>
+                            <option value="10000">10 Khz</option>
+                            <option value="100000">100 Khz</option>
+                            <option value="1000000">1 Mhz</option>
+                            <option value="0">Max</option>
+                        </select>
+                    </label>
+                    <label>
+                        <select id="memory-size-select" style="font-family: monospace;background-color: black;color: #ffcc00" name="memory-size">
+                            <option value="1024" selected>1K</option>
+                            <option value="2048">2K</option>
+                            <option value="4096">4K</option>
+                            <option value="8192">8K</option>
+                            <option value="16384">16K</option>
+                        </select>
+                    </label>
+                    <button id="btn-run">run</button>
+                    <button id="btn-step">step</button>
+                    <button id="btn-step-back">back</button>
+                    <button id="btn-quit">quit</button>
+                    <button id="btn-reset">reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Panel -->
+        <div class="panel" id="register-panel">
+            <div>
+                <table id="register-table" style="table-layout: fixed;">
+                    <colgroup>
+                        <col span="1" style="width: 15px;">
+                        <col span="1" style="width: 180px;">
+                        <col span="1" style="width: 40px;">
+                        <col span="1" style="width: 35px;">
+                        <col span="1" style="width: 25px;">
+                    </colgroup>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th style="text-align: center; font-size: 10px;">HEX</th>
+                        <th style="text-align: center; font-size: 10px;">DEC</th>
+                        <th style="text-align: center; font-size: 10px;">STR</th>
+                    </tr>
+                    <tr>
+                        <td>AX</td>
+                        <td id="ax-leds"></td>
+                        <td class="reg-value" id="ax-value">0x0000</td>
+                        <td class="reg-value" id="ax-dec">0</td>
+                        <td class="reg-value" id="ax-str"></td>
+                    </tr>
+                    <tr>
+                        <td>BX</td>
+                        <td id="bx-leds"></td>
+                        <td class="reg-value" id="bx-value">0x0000</td>
+                        <td class="reg-value" id="bx-dec">0</td>
+                        <td class="reg-value" id="bx-str"></td>
+                    </tr>
+                    <tr>
+                        <td>CX</td>
+                        <td id="cx-leds"></td>
+                        <td class="reg-value" id="cx-value">0x0000</td>
+                        <td class="reg-value" id="cx-dec">0</td>
+                        <td class="reg-value" id="cx-str"></td>
+                    </tr>
+                    <tr>
+                        <td>DX</td>
+                        <td id="dx-leds"></td>
+                        <td class="reg-value" id="dx-value">0x0000</td>
+                        <td class="reg-value" id="dx-dec">0</td>
+                        <td class="reg-value" id="dx-str"></td>
+                    </tr>
+                    <tr>
+                        <td>EX</td>
+                        <td id="ex-leds"></td>
+                        <td class="reg-value" id="ex-value">0x0000</td>
+                        <td class="reg-value" id="ex-dec">0</td>
+                        <td class="reg-value" id="ex-str"></td>
+                    </tr>
+                    <tr>
+                        <td>FX</td>
+                        <td id="fx-leds"></td>
+                        <td class="reg-value" id="fx-value">0x0000</td>
+                        <td class="reg-value" id="fx-dec">0</td>
+                        <td class="reg-value" id="fx-str"></td>
+                    </tr>
+                    <tr>
+                        <td>SP</td>
+                        <td id="sp-leds"></td>
+                        <td class="reg-value" id="sp-value">0x0000</td>
+                        <td class="reg-value" id="sp-dec">0</td>
+                        <td class="reg-value" id="sp-str"></td>
+                    </tr>
+                    <tr>
+                        <td>FP</td>
+                        <td id="fp-leds"></td>
+                        <td class="reg-value" id="fp-value">0x0000</td>
+                        <td class="reg-value" id="fp-dec">0</td>
+                        <td class="reg-value" id="fp-str"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5">
+                            <hr/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>BK</td>
+                        <td id="bk-leds"></td>
+                        <td class="reg-value" id="bk-value">0x0000</td>
+                        <td class="reg-value" id="bk-dec">0</td>
+                        <td class="reg-value" id="bk-str"></td>
+                    </tr>
+                    <tr>
+                        <td>PC</td>
+                        <td id="pc-leds"></td>
+                        <td class="reg-value" id="pc-value">0x0020</td>
+                        <td class="reg-value" id="pc-dec">32</td>
+                        <td class="reg-value" id="pc-str"></td>
+                    </tr>
+                    <tr>
+                        <td>CB</td>
+                        <td id="cb-leds"></td>
+                        <td class="reg-value" id="cb-value">0x0000</td>
+                        <td class="reg-value" id="cb-dec">0</td>
+                        <td class="reg-value" id="cb-str"></td>
+                    </tr>
+                    <tr>
+                        <td>IR</td>
+                        <td id="ir-leds"></td>
+                        <td class="reg-value" id="ir-value" colspan="3" style="text-align: center;">0x0000</td>
+                    </tr>
+                    <tr>
+                        <td>DR</td>
+                        <td id="dr-leds"></td>
+                        <td class="reg-value" id="dr-value" colspan="3" style="text-align: center;">0x0000</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5">
+                            <hr/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" style="text-align: center">
+                            FLAGS:
+                            <span id="flag-zf" class="blinken off" title="Zero Flag"></span> Z
+                            <span id="flag-sf" class="blinken off" title="Sign Flag"></span> S
+                            <span id="flag-cf" class="blinken off" title="Carry Flag"></span> C
+                            <span id="flag-of" class="blinken off" title="Overflow Flag"></span> O
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Memory Panel -->
+        <div class="panel" id="memory-panel">
+            <div>
+                <div id="memory-header">
+                    Memory
+                    <button id="memory-mode-btn" style="float: right; font-family: monospace; font-size: 10px; padding: 2px 6px;">DYN</button>
+                </div>
+                <div class="memory" id="memory-view">
+                    <!-- Memory hex dump will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER COLUMN: Display, Console -->
+    <div id="center">
+        <!-- Display Panel (placeholder for graphics) -->
+        <div class="panel" id="display">
+            <div id="display-wrapper">
+                <canvas id="display-canvas"></canvas>
+            </div>
+
+            <!-- Game Boy Controls -->
+            <div id="gameboy-controls">
+                <!-- D-Pad -->
+                <div id="dpad">
+                    <button class="dpad-btn dpad-up" id="btn-up"></button>
+                    <button class="dpad-btn dpad-left" id="btn-left"></button>
+                    <button class="dpad-btn dpad-right" id="btn-right"></button>
+                    <button class="dpad-btn dpad-down" id="btn-down"></button>
+                </div>
+
+                <!-- Start/Select -->
+                <div id="start-select">
+                    <button class="small-btn" id="btn-select">select</button>
+                    <button class="small-btn" id="btn-start">start</button>
+                </div>
+
+                <!-- A/B Buttons -->
+                <div id="ab-buttons">
+                    <button class="action-btn" id="btn-b">B</button>
+                    <button class="action-btn" id="btn-a">A</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Console Panel -->
+        <div class="panel" id="console-panel">
+            <div>
+                <div id="console-header">
+                    Terminal
+                    <button id="btn-expand-console" class="expand-btn" title="Expand" style="float: right;">&#x2921;</button>
+                </div>
+                <div id="console">
+                    <div id="console-history"></div>
+                    <div id="console-input-wrapper">
+                        <span style="color: var(--console-primary)">></span>
+                        <input type="text" id="console-input" autocomplete="off" spellcheck="false" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: File System / Editor -->
+    <div id="fs" class="panel site">
+        <div id="fs-header">
+            File System
+            <div style="float: right;">
+                <button id="btn-expand-fs" class="expand-btn" title="Expand">&#x2921;</button>
+            </div>
+            <div class="dropdown" style="float: right;">
+                <button id="fs-menu-btn" class="dropdown-btn">&#9881;</button>
+                <div id="fs-menu" class="dropdown-content">
+                    <a href="#" id="menu-new-file">New File</a>
+                    <a href="#" id="menu-new-folder">New Folder</a>
+                    <a href="#" id="menu-upload-file">Upload File</a>
+                    <a href="#" id="menu-upload-zip-merge">Upload ZIP (Merge)</a>
+                    <a href="#" id="menu-upload-zip-replace">Upload ZIP (Replace)</a>
+                    <a href="#" id="menu-download-zip">Download as ZIP</a>
+                    <a href="#" id="menu-delete">Delete</a>
+                    <a href="#" id="menu-reset-fs">Reset File System</a>
+                </div>
+            </div>
+            <input type="file" id="file-upload-input" style="display: none;" />
+            <input type="file" id="zip-upload-input" accept=".zip" style="display: none;" />
+        </div>
+        <div class="editor-nav-bar" id="editor-nav-bar" style="display: none;">
+            <button id="btn-back" title="Close">close</button>
+            <span class="title" id="current-path"></span>
+            <button id="btn-load-program" title="Load (Ctrl+Enter)">load</button>
+            <button id="btn-run-program" title="Run (Ctrl+R)">run</button>
+            <button id="btn-save" title="Save (Ctrl+S)">save</button>
+        </div>
+
+        <!-- Explorer View -->
+        <div id="explorer-view" class="view-container">
+            <div id="file-explorer"></div>
+        </div>
+
+        <!-- Editor View -->
+        <div id="editor-view" class="view-container" style="display: none;">
+            <div id="editor"></div>
+        </div>
+
+        <!-- Binary Viewer -->
+        <div id="binary-view" class="view-container" style="display: none;">
+            <div id="binary-viewer"></div>
+        </div>
+
+        <!-- Image Viewer -->
+        <div id="image-view" class="view-container" style="display: none;">
+            <img id="image-viewer" style="max-width: 100%; height: auto;" />
+        </div>
+    </div>
+</main>
+
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/monaco-editor/vs/loader.js"></script>
+<script>
+    require.config({ paths: { vs: 'vendor/monaco-editor/vs' } });
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

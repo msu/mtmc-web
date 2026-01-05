@@ -1,0 +1,13 @@
+{
+  "name": "mtmc-16-emulator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "assemble": "node js/assemble-cli.js"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.16"
+  }
+}

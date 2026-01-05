@@ -1,0 +1,43 @@
+; Cross-Platform Test 01: All 8 Registers
+; Tests that all registers (AX, BX, CX, DX, EX, FX, SP, FP) work correctly
+; Expected output: Should print values 1-6 then exit
+
+; Test basic register operations
+MOV AX, 1
+MOV BX, 2
+MOV CX, 3
+MOV DX, 4
+MOV EX, 5
+MOV FX, 6
+
+; Print each register value
+SYSCALL PRINT_INT
+MOV AX, 10
+SYSCALL PRINT_CHAR  ; newline
+
+MOV AX, BX
+SYSCALL PRINT_INT
+MOV AX, 10
+SYSCALL PRINT_CHAR
+
+MOV AX, CX
+SYSCALL PRINT_INT
+MOV AX, 10
+SYSCALL PRINT_CHAR
+
+MOV AX, DX
+SYSCALL PRINT_INT
+MOV AX, 10
+SYSCALL PRINT_CHAR
+
+MOV AX, EX
+SYSCALL PRINT_INT
+MOV AX, 10
+SYSCALL PRINT_CHAR
+
+MOV AX, FX
+SYSCALL PRINT_INT
+MOV AX, 10
+SYSCALL PRINT_CHAR
+
+SYSCALL EXIT

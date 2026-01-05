@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Monaco Editor Test</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: monospace; }
+        #container { width: 800px; height: 600px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Monaco Editor Test</h1>
+    <div id="container"></div>
+    <button onclick="getValue()">Get Value</button>
+    <button onclick="setValue()">Set Value</button>
+
+    <script src="monaco-editor/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { vs: 'monaco-editor/vs' } });
+
+        let editor;
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('container'), {
+                value: '; Test x366 assembly\nMOV AX, 42\nSYSCALL PRINT_INT\nSYSCALL EXIT',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                lineNumbers: 'on'
+            });
+            console.log('Monaco loaded successfully!');
+        });
+
+        function getValue() {
+            console.log('Current value:', editor.getValue());
+            alert(editor.getValue());
+        }
+
+        function setValue() {
+            editor.setValue('; New content\nMOV BX, 100');
+        }
+    </script>
+</body>
+</html>
