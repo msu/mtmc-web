@@ -1,7 +1,7 @@
 // MTMC-16 UI Manager
 // Handles all UI updates, blinkenlights, and user interaction
 
-import { CPU, Memory, decodeFromBytes, Opcode } from './emulator.js'
+import { CPU, Memory, decodeFromBytes, Opcode, Syscall } from './emulator.js'
 import { assemble } from './assembler.js'
 import { FileSystem } from './filesystem.js'
 import { OS } from './os.js'
@@ -335,6 +335,19 @@ function getDisplayFormat(memClass) {
   }
 }
 
+// Get syscall name from number
+function getSyscallName(num) {
+  const names = {
+    0: 'EXIT', 1: 'PRINT_CHAR', 2: 'PRINT_STRING', 3: 'PRINT_INT',
+    4: 'READ_CHAR', 5: 'READ_INT', 6: 'READ_STRING', 7: 'ATOI',
+    8: 'SBRK', 9: 'SCREEN', 10: 'SET_COLOR', 11: 'DRAW_PIXEL',
+    12: 'DRAW_LINE', 13: 'DRAW_RECT', 14: 'DRAW_CIRCLE',
+    15: 'CLEAR_SCREEN', 16: 'DRAW_TEXT', 17: 'PAINT_DISPLAY',
+    18: 'SLEEP', 19: 'READ_FILE', 20: 'MALLOC', 21: 'FREE'
+  }
+  return names[num] || 'UNKNOWN'
+}
+
 // Disassemble instruction at address
 function disassembleInstruction(addr) {
   try {
@@ -374,7 +387,7 @@ function disassembleInstruction(addr) {
     if (opcode === Opcode.MUL) return `MUL ${reg(instr.reg)}`
     if (opcode === Opcode.DIV) return `DIV ${reg(instr.reg)}`
     if (opcode === Opcode.NOT) return `NOT ${reg(instr.reg)}`
-    if (opcode === Opcode.SYSCALL) return `SYSCALL ${instr.syscall}`
+    if (opcode === Opcode.SYSCALL) return `SYSCALL ${getSyscallName(instr.syscall)}(${instr.syscall})`
 
     // 4-byte register-register (compact format - no space after comma)
     if (opcode === Opcode.MOV_REG_REG) return `MOV ${reg(instr.dst)},${reg(instr.src)}`
