@@ -1806,13 +1806,18 @@ function executionLoop() {
   }
 
   // Throttle UI updates to reduce DOM manipulation overhead
-  // At high speeds (>10kHz or Max), disable debugging UI updates entirely
-  if (speed > 0 && speed <= 10000) {
-    const now = performance.now()
-    if (now - lastUIUpdate > UI_UPDATE_INTERVAL) {
+  // At high speeds, only update registers (not memory) to maintain performance
+  const now = performance.now()
+  if (now - lastUIUpdate > UI_UPDATE_INTERVAL) {
+    if (speed === 0 || speed > 10000) {
+      // High speed: only update registers, skip expensive memory view
+      updateRegisters()
+      updateButtonStates()
+    } else {
+      // Normal speed: full UI update
       updateUI()
-      lastUIUpdate = now
     }
+    lastUIUpdate = now
   }
 
   if (running) {
@@ -1958,6 +1963,7 @@ function handleRun() {
       intervalId = null
     }
     document.getElementById('btn-run').textContent = 'run'
+    updateButtonStates()
   } else {
     // Run
     running = true
