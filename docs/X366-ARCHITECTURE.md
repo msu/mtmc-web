@@ -1165,14 +1165,11 @@ main:
 ```asm
 .MEMORY 1K
 
-JMP main
-
 msg: DB "Hello, World!", '\n', '\0'
 
-main:
-    MOV AX, msg          ; AX = address of message
-    SYSCALL PRINT_STRING ; Print the string
-    SYSCALL EXIT         ; Exit program
+MOV AX, msg          ; AX = address of message
+SYSCALL PRINT_STRING ; Print the string
+SYSCALL EXIT         ; Exit program
 ```
 
 ### Command Line Echo
@@ -1180,10 +1177,9 @@ main:
 ```asm
 ; Echo command line input back to user
 ; Run with: x366 program.bin "Hello from command line!"
-main:
-    ; AX already points to command line input
-    SYSCALL PRINT_STRING ; Print the input
-    SYSCALL EXIT
+; AX already points to command line input
+SYSCALL PRINT_STRING ; Print the input
+SYSCALL EXIT
 ```
 
 ### Parse and Add Numbers
@@ -1191,31 +1187,28 @@ main:
 ```asm
 ; Add two numbers from command line
 ; Run with: x366 program.bin "10 20"
-main:
-    MOV BX, AX           ; Save input pointer
+MOV BX, AX           ; Save input pointer
 
-    ; Parse first number
-    MOV AX, BX
-    SYSCALL ATOI         ; AX = 10, BX = updated pointer
-    PUSH AX              ; Save first number
+; Parse first number
+MOV AX, BX
+SYSCALL ATOI         ; AX = 10, BX = updated pointer
+PUSH AX              ; Save first number
 
-    ; Parse second number
-    MOV AX, BX
-    SYSCALL ATOI         ; AX = 20, BX = updated pointer
+; Parse second number
+MOV AX, BX
+SYSCALL ATOI         ; AX = 20, BX = updated pointer
 
-    ; Add them
-    POP BX               ; BX = first number
-    ADD AX, BX           ; AX = 10 + 20 = 30
+; Add them
+POP BX               ; BX = first number
+ADD AX, BX           ; AX = 10 + 20 = 30
 
-    SYSCALL PRINT_INT
-    SYSCALL EXIT
+SYSCALL PRINT_INT
+SYSCALL EXIT
 ```
 
 ### Factorial (Recursive)
 
 ```asm
-JMP main
-
 ; factorial(n) - compute n!
 ; Parameter: AX = n
 ; Returns: AX = n!
@@ -1239,18 +1232,15 @@ recursive:
     POP FP
     RET
 
-main:
-    MOV AX, 5            ; Compute 5!
-    CALL factorial       ; Result: 120
-    SYSCALL PRINT_INT
-    SYSCALL EXIT
+MOV AX, 5            ; Compute 5!
+CALL factorial       ; Result: 120
+SYSCALL PRINT_INT
+SYSCALL EXIT
 ```
 
 ### Array Sum
 
 ```asm
-JMP main
-
 ; sum_array(base, length) returns sum
 ; Parameters: AX = base address, BX = length
 sum_array:
@@ -1286,19 +1276,16 @@ done:
 
 array: DW 10, 20, 30, 40, 50
 
-main:
-    MOV AX, array        ; Base address
-    MOV BX, 5            ; Length
-    CALL sum_array       ; Returns 150
-    SYSCALL PRINT_INT
-    SYSCALL EXIT
+MOV AX, array        ; Base address
+MOV BX, 5            ; Length
+CALL sum_array       ; Returns 150
+SYSCALL PRINT_INT
+SYSCALL EXIT
 ```
 
 ### Max of 4 Numbers
 
 ```asm
-JMP main
-
 ; max4(a, b, c, d) - returns maximum
 ; Parameters: AX=a, BX=b, CX=c, DX=d
 max4:
@@ -1316,22 +1303,19 @@ skip2:
 skip3:
     RET
 
-main:
-    MOV AX, 15
-    MOV BX, 42
-    MOV CX, 7
-    MOV DX, 23
-    CALL max4            ; Returns 42
-    SYSCALL PRINT_INT
-    SYSCALL EXIT
+MOV AX, 15
+MOV BX, 42
+MOV CX, 7
+MOV DX, 23
+CALL max4            ; Returns 42
+SYSCALL PRINT_INT
+SYSCALL EXIT
 ```
 
 ### String Length (Character Literals & Memory Operations)
 
 ```asm
 .MEMORY 1K
-
-JMP main
 
 ; strlen(str) - returns length of null-terminated string
 ; Parameter: AX = string pointer
@@ -1353,16 +1337,14 @@ done:
     POP BX
     RET
 
-; String to count
 test_str: DB "Hello, X366!", '\0'
 
-main:
-    MOV AX, test_str
-    CALL strlen          ; Returns 13
-    SYSCALL PRINT_INT
-    MOV AL, '\n'         ; Print newline (character literal)
-    SYSCALL PRINT_CHAR
-    SYSCALL EXIT
+MOV AX, test_str
+CALL strlen          ; Returns 13
+SYSCALL PRINT_INT
+MOV AL, '\n'         ; Print newline (character literal)
+SYSCALL PRINT_CHAR
+SYSCALL EXIT
 ```
 
 ### Character Counter (Using DUP, Character Literals, and INC [addr])
@@ -1370,16 +1352,12 @@ main:
 ```asm
 .MEMORY 2K
 
-JMP main
-
-; Data section
 message: DB "The quick brown fox jumps over the lazy dog!", '\n', '\0'
 space_count: DW 0
 letter_count: DW 0
 buffer: DB 256 DUP(0)    ; Using DUP for buffer allocation
 
-main:
-    MOV BX, message
+MOV BX, message
 
 scan_loop:
     ; Load character

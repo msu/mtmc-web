@@ -43,19 +43,16 @@ HALT
 Real programs use strings stored in memory:
 
 ```asm
-JMP main
-
 message: DB "Hello, World!", '\n', '\0'
 
-main:
-    MOV AX, message
-    SYSCALL PRINT_STRING
-    HALT
+MOV AX, message
+SYSCALL PRINT_STRING
+HALT
 ```
 
 Key points:
-* `JMP main` skips over the data section
 * `DB` defines bytes in memory (our text string)
+* The assembler automatically moves data declarations to the end
 * `'\n'` is a newline, `'\0'` terminates the string
 * `MOV AX, message` loads the address of the message
 * PRINT_STRING reads characters from memory until it hits `'\0'`
@@ -97,18 +94,15 @@ DEC CX         ; CX = CX - 1
 ### Example: Computing an Average
 
 ```asm
-JMP main
-
 a: DW 15
 b: DW 25
 
-main:
-    MOV AX, [a]
-    ADD AX, [b]
-    MOV BX, 2
-    DIV BX
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, [a]
+ADD AX, [b]
+MOV BX, 2
+DIV BX
+SYSCALL PRINT_INT
+HALT
 ```
 
 This loads two numbers from memory, adds them, divides by 2, and prints the result (20).
@@ -192,18 +186,15 @@ Functions encapsulate reusable code.
 ### Simple Function
 
 ```asm
-JMP main
-
 add:
     ADD AX, BX
     RET
 
-main:
-    MOV AX, 10
-    MOV BX, 20
-    CALL add
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, 10
+MOV BX, 20
+CALL add
+SYSCALL PRINT_INT
+HALT
 ```
 
 The function:
@@ -217,8 +208,6 @@ CALL pushes the return address on the stack and jumps to the function. RET pops 
 ### Factorial
 
 ```asm
-JMP main
-
 ; factorial(n) in AX, returns n! in AX
 factorial:
     MOV EX, AX
@@ -234,11 +223,10 @@ fact_loop:
 fact_done:
     RET
 
-main:
-    MOV AX, 5
-    CALL factorial
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, 5
+CALL factorial
+SYSCALL PRINT_INT
+HALT
 ```
 
 This computes 5! = 120 iteratively.
@@ -246,8 +234,6 @@ This computes 5! = 120 iteratively.
 ### Recursive Factorial
 
 ```asm
-JMP main
-
 factorial:
     CMP AX, 1
     JG recursive
@@ -268,11 +254,10 @@ recursive:
     POP FP
     RET
 
-main:
-    MOV AX, 5
-    CALL factorial
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, 5
+CALL factorial
+SYSCALL PRINT_INT
+HALT
 ```
 
 Recursive version uses the stack to save state across calls.
@@ -293,22 +278,19 @@ buffer: DB 100 DUP(0)
 ### Accessing Array Elements
 
 ```asm
-JMP main
-
 array: DW 10, 20, 30, 40, 50
 
-main:
-    MOV BX, array
-    MOV AX, [BX]        ; Load array[0] = 10
-    SYSCALL PRINT_INT
-    MOV AX, '\n'
-    SYSCALL PRINT_CHAR
+MOV BX, array
+MOV AX, [BX]        ; Load array[0] = 10
+SYSCALL PRINT_INT
+MOV AX, '\n'
+SYSCALL PRINT_CHAR
 
-    ADD BX, 2           ; Move to next word (2 bytes)
-    MOV AX, [BX]        ; Load array[1] = 20
-    SYSCALL PRINT_INT
+ADD BX, 2           ; Move to next word (2 bytes)
+MOV AX, [BX]        ; Load array[1] = 20
+SYSCALL PRINT_INT
 
-    HALT
+HALT
 ```
 
 ### Indexed Access
@@ -316,30 +298,24 @@ main:
 Using register+register addressing for runtime indices:
 
 ```asm
-JMP main
-
 array: DW 10, 20, 30, 40, 50
 
-main:
-    MOV BX, array       ; Base address
-    MOV CX, 4           ; Index: element 2 * 2 bytes = 4
-    MOV AX, [BX+CX]     ; Load array[2] = 30
-    SYSCALL PRINT_INT
-    HALT
+MOV BX, array       ; Base address
+MOV CX, 4           ; Index: element 2 * 2 bytes = 4
+MOV AX, [BX+CX]     ; Load array[2] = 30
+SYSCALL PRINT_INT
+HALT
 ```
 
 ### Summing an Array
 
 ```asm
-JMP main
-
 array: DW 10, 20, 30, 40, 50
 length: DW 5
 
-main:
-    MOV BX, array
-    MOV CX, [length]
-    MOV DX, 0           ; sum
+MOV BX, array
+MOV CX, [length]
+MOV DX, 0           ; sum
 
 sum_loop:
     CMP CX, 0
@@ -366,8 +342,6 @@ Strings are byte arrays ending with `'\0'`.
 ### String Length
 
 ```asm
-JMP main
-
 ; strlen(str) - string pointer in AX, returns length in AX
 strlen:
     PUSH BX
@@ -388,11 +362,10 @@ done:
 
 test_str: DB "Hello!", '\0'
 
-main:
-    MOV AX, test_str
-    CALL strlen
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, test_str
+CALL strlen
+SYSCALL PRINT_INT
+HALT
 ```
 
 Returns 6 (the length of "Hello!").
@@ -400,13 +373,10 @@ Returns 6 (the length of "Hello!").
 ### Character Counting
 
 ```asm
-JMP main
-
 message: DB "The quick brown fox", '\0'
 space_count: DW 0
 
-main:
-    MOV BX, message
+MOV BX, message
 
 scan_loop:
     MOV AL, [BX]
@@ -456,8 +426,6 @@ my_function:
 ### Example: Computing with Locals
 
 ```asm
-JMP main
-
 ; compute(a, b) - returns (a*2 + b*3)
 ; Parameters: AX=a, BX=b
 compute:
@@ -484,12 +452,11 @@ compute:
     POP FP
     RET
 
-main:
-    MOV AX, 5
-    MOV BX, 7
-    CALL compute
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, 5
+MOV BX, 7
+CALL compute
+SYSCALL PRINT_INT
+HALT
 ```
 
 Returns 31 (5*2 + 7*3 = 10 + 21).
@@ -511,13 +478,10 @@ Run with: `x366 echo.bin "Hello from command line!"`
 ### Parsing Numbers
 
 ```asm
-JMP main
-
-main:
-    ; AX points to input string
-    SYSCALL ATOI        ; Convert to integer
-    SYSCALL PRINT_INT
-    HALT
+; AX points to input string
+SYSCALL ATOI        ; Convert to integer
+SYSCALL PRINT_INT
+HALT
 ```
 
 Run with: `x366 parse.bin "42"`
@@ -525,26 +489,23 @@ Run with: `x366 parse.bin "42"`
 ### Multiple Numbers
 
 ```asm
-JMP main
+MOV BX, AX          ; Save input pointer
 
-main:
-    MOV BX, AX          ; Save input pointer
+; Parse first number
+MOV AX, BX
+SYSCALL ATOI
+PUSH AX
 
-    ; Parse first number
-    MOV AX, BX
-    SYSCALL ATOI
-    PUSH AX
+; Parse second number (BX updated by ATOI)
+MOV AX, BX
+SYSCALL ATOI
 
-    ; Parse second number (BX updated by ATOI)
-    MOV AX, BX
-    SYSCALL ATOI
+; Add them
+POP BX
+ADD AX, BX
 
-    ; Add them
-    POP BX
-    ADD AX, BX
-
-    SYSCALL PRINT_INT
-    HALT
+SYSCALL PRINT_INT
+HALT
 ```
 
 Run with: `x366 add.bin "10 20"` - prints 30.
@@ -554,8 +515,6 @@ Run with: `x366 add.bin "10 20"` - prints 30.
 A more complex recursive example:
 
 ```asm
-JMP main
-
 ; fib(n) - compute nth Fibonacci number
 ; Parameter: AX = n
 ; Returns: AX = fib(n)
@@ -583,11 +542,10 @@ recursive:
     POP FP
     RET
 
-main:
-    MOV AX, 10
-    CALL fibonacci
-    SYSCALL PRINT_INT
-    HALT
+MOV AX, 10
+CALL fibonacci
+SYSCALL PRINT_INT
+HALT
 ```
 
 Computes the 10th Fibonacci number (55) recursively.
@@ -601,58 +559,28 @@ Programs can allocate memory dynamically.
 ### Using SBRK
 
 ```asm
-JMP main
+; Allocate 100 bytes
+MOV AX, 100
+SYSCALL SBRK        ; AX now points to allocated memory
+MOV BX, AX
 
-main:
-    ; Allocate 100 bytes
-    MOV AX, 100
-    SYSCALL SBRK        ; AX now points to allocated memory
-    MOV BX, AX
+; Use the memory
+MOV [BX+0], 1000
+MOV [BX+2], 2000
 
-    ; Use the memory
-    MOV [BX+0], 1000
-    MOV [BX+2], 2000
+; Print values
+MOV AX, [BX+0]
+SYSCALL PRINT_INT
+MOV AX, '\n'
+SYSCALL PRINT_CHAR
 
-    ; Print values
-    MOV AX, [BX+0]
-    SYSCALL PRINT_INT
-    MOV AX, '\n'
-    SYSCALL PRINT_CHAR
+MOV AX, [BX+2]
+SYSCALL PRINT_INT
 
-    MOV AX, [BX+2]
-    SYSCALL PRINT_INT
-
-    HALT
+HALT
 ```
 
-### Using MALLOC/FREE
-
-```asm
-JMP main
-
-main:
-    ; Allocate a block
-    MOV AX, 50
-    SYSCALL MALLOC
-    CMP AX, -1
-    JE error
-    MOV BX, AX
-
-    ; Use it
-    MOV [BX+0], 42
-
-    ; Free it
-    MOV AX, BX
-    SYSCALL FREE
-
-    HALT
-
-error:
-    ; Handle allocation failure
-    HALT
-```
-
-MALLOC/FREE are better for programs that allocate and free frequently, as freed memory can be reused.
+**Note:** MALLOC/FREE syscalls are not implemented in the emulator. They are reserved for optional student exercises in implementing dynamic memory allocation with free lists.
 
 ## Graphics Programming
 

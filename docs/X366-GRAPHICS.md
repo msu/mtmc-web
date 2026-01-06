@@ -217,17 +217,14 @@ SYSCALL DRAW_TEXT
 
 **Example:**
 ```asm
-JMP main
-
 message: DB "Hello!", '\0'
 
-main:
-    MOV AX, 3          ; Lightest color
-    SYSCALL SET_COLOR
-    MOV AX, 20         ; X position
-    MOV BX, 60         ; Y position
-    MOV CX, message    ; String address
-    SYSCALL DRAW_TEXT
+MOV AX, 3          ; Lightest color
+SYSCALL SET_COLOR
+MOV AX, 20         ; X position
+MOV BX, 60         ; Y position
+MOV CX, message    ; String address
+SYSCALL DRAW_TEXT
 ```
 
 ### SYSCALL 17: PAINT_DISPLAY
@@ -324,55 +321,52 @@ HALT
 
 ```asm
 ; Bouncing ball animation
-JMP main
-
 ball_x: DW 80
 ball_y: DW 72
 ball_dx: DW 2
 ball_dy: DW 1
 
-main:
-    game_loop:
-        ; Clear screen
-        MOV AX, 0
-        SYSCALL SET_COLOR
-        SYSCALL CLEAR_SCREEN
+game_loop:
+    ; Clear screen
+    MOV AX, 0
+    SYSCALL SET_COLOR
+    SYSCALL CLEAR_SCREEN
 
-        ; Draw ball
-        MOV AX, 3          ; Lightest color
-        SYSCALL SET_COLOR
-        MOV AX, [ball_x]
-        MOV BX, [ball_y]
-        MOV CX, 5          ; Radius
-        SYSCALL DRAW_CIRCLE
+    ; Draw ball
+    MOV AX, 3          ; Lightest color
+    SYSCALL SET_COLOR
+    MOV AX, [ball_x]
+    MOV BX, [ball_y]
+    MOV CX, 5          ; Radius
+    SYSCALL DRAW_CIRCLE
 
-        ; Refresh display
-        SYSCALL PAINT_DISPLAY
+    ; Refresh display
+    SYSCALL PAINT_DISPLAY
 
-        ; Update position
-        MOV AX, [ball_x]
-        ADD AX, [ball_dx]
-        MOV [ball_x], AX
+    ; Update position
+    MOV AX, [ball_x]
+    ADD AX, [ball_dx]
+    MOV [ball_x], AX
 
-        MOV AX, [ball_y]
-        ADD AX, [ball_dy]
-        MOV [ball_y], AX
+    MOV AX, [ball_y]
+    ADD AX, [ball_dy]
+    MOV [ball_y], AX
 
-        ; Bounce off walls
-        MOV AX, [ball_x]
-        CMP AX, 155
-        JL no_bounce_right
-        MOV AX, [ball_dx]
-        NOT AX
-        INC AX             ; Negate
-        MOV [ball_dx], AX
-    no_bounce_right:
+    ; Bounce off walls
+    MOV AX, [ball_x]
+    CMP AX, 155
+    JL no_bounce_right
+    MOV AX, [ball_dx]
+    NOT AX
+    INC AX             ; Negate
+    MOV [ball_dx], AX
+no_bounce_right:
 
-        ; Frame delay (60 FPS)
-        MOV AX, 16
-        SYSCALL SLEEP
+    ; Frame delay (60 FPS)
+    MOV AX, 16
+    SYSCALL SLEEP
 
-        JMP game_loop
+    JMP game_loop
 ```
 
 ## Using All Six Registers
