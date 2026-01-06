@@ -905,7 +905,7 @@ async function handleConsoleInput(inputText) {
     const savedSP = cpu.registers.SP
 
     // Execute instruction (this will modify PC)
-    cpu.bincuteInstruction(instr)
+    cpu.executeInstruction(instr)
 
     // Restore PC
     cpu.registers.PC = savedPC
