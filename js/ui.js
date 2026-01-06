@@ -3534,4 +3534,13 @@ export async function initUI() {
     // hello.exe might not exist, silently continue
     console.log('Could not load hello.exe:', err)
   }
+
+  // Open hello.asm in editor and highlight current execution line
+  try {
+    await openFileInEditor('/examples/hello.asm')
+    // Update execution line to show current PC position
+    updateEditorExecutionLine()
+  } catch (err) {
+    console.log('Could not open hello.asm:', err)
+  }
 }
