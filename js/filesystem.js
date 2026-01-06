@@ -42,6 +42,9 @@ export class FileSystem {
 
     // Pre-populate cache with all files
     await this.populateCache()
+
+    // Check disk version
+    await this.checkDiskVersion()
   }
 
   // Load all files from IndexedDB into memory cache
@@ -61,6 +64,62 @@ export class FileSystem {
         console.log(`File system cache populated with ${this.cache.size} files`)
         resolve()
       }
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  // Check if disk version has been updated
+  async checkDiskVersion() {
+    try {
+      // Fetch current manifest from server
+      const response = await fetch('disk/manifest.json')
+      if (!response.ok) return
+
+      const manifest = await response.json()
+      const currentVersion = manifest._version
+
+      if (!currentVersion) return
+
+      // Get stored version from metadata
+      const storedVersion = await this.getMeta('disk_version')
+
+      if (!storedVersion) {
+        // First time - store current version
+        await this.setMeta('disk_version', currentVersion)
+        return
+      }
+
+      // Compare versions
+      if (storedVersion !== currentVersion) {
+        // Notify via callback if available
+        if (this.onVersionUpdate) {
+          this.onVersionUpdate(storedVersion, currentVersion)
+        }
+      }
+    } catch (err) {
+      console.error('Error checking disk version:', err)
+    }
+  }
+
+  // Metadata operations
+  async getMeta(key) {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction(META_STORE, 'readonly')
+      const store = tx.objectStore(META_STORE)
+      const request = store.get(key)
+
+      request.onsuccess = () => resolve(request.result?.value)
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async setMeta(key, value) {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction(META_STORE, 'readwrite')
+      const store = tx.objectStore(META_STORE)
+      const request = store.put({ key, value })
+
+      request.onsuccess = () => resolve()
       request.onerror = () => reject(request.error)
     })
   }
@@ -461,6 +520,9 @@ export class FileSystem {
       // Create directory structure
       const dirs = new Set()
       for (const path of Object.keys(manifest)) {
+        // Skip metadata keys
+        if (path.startsWith('_')) continue
+
         let dir = this.dirname(path)
         while (dir !== '/') {
           dirs.add(dir)
@@ -480,6 +542,8 @@ export class FileSystem {
       // Load all files
       const baseUrl = manifestUrl.substring(0, manifestUrl.lastIndexOf('/'))
       for (const [path, relativeUrl] of Object.entries(manifest)) {
+        // Skip metadata keys
+        if (path.startsWith('_')) continue
         const fileUrl = `${baseUrl}/${relativeUrl}`
         const response = await fetch(fileUrl)
 

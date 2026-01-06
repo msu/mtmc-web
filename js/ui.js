@@ -3167,6 +3167,20 @@ async function handleResetFileSystem() {
     consolePrint('Loading files from disk...')
     await fs.loadManifest('disk/manifest.json')
 
+    // Fetch and store new version
+    try {
+      const response = await fetch('disk/manifest.json')
+      if (response.ok) {
+        const manifest = await response.json()
+        if (manifest._version) {
+          await fs.setMeta('disk_version', manifest._version)
+          consolePrint(`Updated to disk version ${manifest._version}`)
+        }
+      }
+    } catch (err) {
+      console.error('Error updating disk version:', err)
+    }
+
     // Reload UI
     consolePrint('Updating file browser...')
     await renderFileList()
@@ -3261,6 +3275,16 @@ export async function initUI() {
 
   // Initialize file system
   fs = new FileSystem()
+
+  // Set up version update callback
+  fs.onVersionUpdate = (oldVersion, newVersion) => {
+    consolePrint('[MTMC-16 Disk Update Available]')
+    consolePrint(`Current disk version: ${oldVersion}`)
+    consolePrint(`Available version: ${newVersion}`)
+    consolePrint('To update, click the gear menu -> "Reset File System"')
+    consolePrint('WARNING: This will overwrite any changes you have made!')
+  }
+
   await fs.ready
 
   // Create OS with filesystem

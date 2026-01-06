@@ -1,4 +1,5 @@
 {
+  "_version": "1.0.0",
   "/bin/hello.bin": "bin/hello.bin",
   "/bin/echo.bin": "bin/echo.bin",
   "/bin/gol.bin": "bin/gol.bin",
