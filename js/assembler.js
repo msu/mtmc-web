@@ -922,7 +922,7 @@ function encodeInstruction(instruction, operands, labels, currentAddress, lineNu
 // Two-Pass Assembler
 // ============================================================================
 
-export function assemble(source) {
+export function assemble(source, filename = null) {
   const tokens = tokenize(source)
   const labels = {}
   const instructions = []
@@ -1046,7 +1046,7 @@ export function assemble(source) {
   const sectionsOffset = dataEnd   // Sections start after data
 
   // Generate debug info section
-  const debugSection = generateDebugSection(lineMap, labels)
+  const debugSection = generateDebugSection(lineMap, labels, filename)
 
   // Generate sections area
   const sections = []
@@ -1127,8 +1127,18 @@ export function assemble(source) {
 // Debug Info Generation
 // ============================================================================
 
-function generateDebugSection(lineMap, labels) {
+function generateDebugSection(lineMap, labels, filename) {
   const section = []
+
+  // Write source filename (null-terminated)
+  if (filename) {
+    // Extract just the filename from path if provided
+    const basename = filename.split('/').pop().split('\\').pop()
+    for (let i = 0; i < basename.length; i++) {
+      section.push(basename.charCodeAt(i))
+    }
+  }
+  section.push(0x00)  // Null terminator
 
   // Write line map
   for (const entry of lineMap) {

@@ -808,9 +808,9 @@ async function handleConsoleInput(inputText) {
     try {
       let executablePath = cmd
 
-      // Try with .exe extension if not already present
-      if (!executablePath.endsWith('.exe')) {
-        const withExe = executablePath + '.exe'
+      // Try with .bin extension if not already present
+      if (!executablePath.endsWith('.bin')) {
+        const withExe = executablePath + '.bin'
         const exists = await fs.exists(withExe)
         if (exists) {
           executablePath = withExe
@@ -844,12 +844,12 @@ async function handleConsoleInput(inputText) {
   }
 
   // Check if this is an executable in /bin
-  // Try with .exe extension first
-  let executablePath = `/bin/${cmd}.exe`
+  // Try with .bin extension first
+  let executablePath = `/bin/${cmd}.bin`
   try {
     let exists = await fs.exists(executablePath)
     if (!exists) {
-      // Try without .exe extension
+      // Try without .bin extension
       executablePath = `/bin/${cmd}`
       exists = await fs.exists(executablePath)
     }
@@ -905,7 +905,7 @@ async function handleConsoleInput(inputText) {
     const savedSP = cpu.registers.SP
 
     // Execute instruction (this will modify PC)
-    cpu.executeInstruction(instr)
+    cpu.bincuteInstruction(instr)
 
     // Restore PC
     cpu.registers.PC = savedPC
@@ -1112,7 +1112,7 @@ async function cmdCompile(args) {
 // Assemble a file to binary
 async function cmdAsm(args) {
   let sourceFile
-  let outputFile = 'a.exe'
+  let outputFile = 'a.bin'
 
   if (args.length === 0) {
     // If we're in editor mode, assemble current file
@@ -1121,16 +1121,16 @@ async function cmdAsm(args) {
     } else {
       consolePrint('Usage: asm <source.asm> [output]')
       consolePrint('  or open a file in editor and type "asm"')
-      consolePrint('  Default output: a.exe')
+      consolePrint('  Default output: a.bin')
       return
     }
   } else {
     sourceFile = args[0]
     if (args.length > 1) {
       outputFile = args[1]
-      // Add .exe extension if no extension provided
+      // Add .bin extension if no extension provided
       if (!outputFile.includes('.')) {
-        outputFile += '.exe'
+        outputFile += '.bin'
       }
     }
   }
@@ -1173,12 +1173,12 @@ async function cmdLoad(args) {
   // Resolve executable name like the shell does
   // If filename doesn't contain a path separator, look in /bin
   if (!filename.includes('/')) {
-    // Try /bin/<name>.exe first
-    let testPath = `/bin/${filename}.exe`
+    // Try /bin/<name>.bin first
+    let testPath = `/bin/${filename}.bin`
     let exists = await fs.exists(testPath)
 
     if (!exists) {
-      // Try /bin/<name> without .exe
+      // Try /bin/<name> without .bin
       testPath = `/bin/${filename}`
       exists = await fs.exists(testPath)
     }
@@ -1188,9 +1188,9 @@ async function cmdLoad(args) {
     }
     // If not found in /bin, try as-is (might be in current directory or fail later)
   } else {
-    // Path contains /, try adding .exe if not already present
-    if (!filename.endsWith('.exe') && !filename.endsWith('.asm')) {
-      const withExe = filename + '.exe'
+    // Path contains /, try adding .bin if not already present
+    if (!filename.endsWith('.bin') && !filename.endsWith('.asm')) {
+      const withExe = filename + '.bin'
       const exists = await fs.exists(withExe)
       if (exists) {
         filename = withExe
@@ -1202,7 +1202,7 @@ async function cmdLoad(args) {
     const content = await fs.readFile(filename)
     let bytecode
 
-    // Check if this is a binary file (.exe, .x366, or .bin)
+    // Check if this is a binary file (.bin, .x366, or .bin)
     const isBinary = filename.match(/\.(exe|x366|bin)$/i)
 
     if (isBinary) {
@@ -1432,7 +1432,7 @@ async function handleTabCompletion() {
       const binEntries = await fs.listDirectory('/bin')
       binExecutables = binEntries
         .filter(entry => entry.type === 'file')
-        .map(entry => entry.name.replace(/\.exe$/i, ''))  // Remove .exe extension
+        .map(entry => entry.name.replace(/\.bin$/i, ''))  // Remove .bin extension
     } catch (err) {
       // /bin doesn't exist or other error - ignore
     }
@@ -1592,8 +1592,8 @@ function cmdHelp(args) {
   consolePrint('')
   consolePrint('Program Commands:')
   consolePrint('  compile <src> [out]  - Compile .asm to .x366 binary')
-  consolePrint('  asm <file> [out]     - Assemble .asm to .exe (default: a.exe)')
-  consolePrint('  load <file> [args]   - Load and run (.asm/.exe) with optional args')
+  consolePrint('  asm <file> [out]     - Assemble .asm to .bin (default: a.bin)')
+  consolePrint('  load <file> [args]   - Load and run (.asm/.bin) with optional args')
   consolePrint('  <name> [args]        - Run executable from /bin (e.g., hello, echo)')
   consolePrint('  set <reg|addr> <val> - Set register or memory value')
   consolePrint('  set screen <url>     - Load image from URL to display')
@@ -1628,7 +1628,7 @@ function cmdClear(args) {
 // Reset emulator (CPU and memory)
 function cmdReset(args) {
   cpu.reset()
-  memory = new Memory(memory.size)
+  memory = new Memory(memory.size, display)
   cpu.memory = memory
   display.clear()
   updateUI()
@@ -2013,6 +2013,9 @@ function handleStepBack() {
     undoList[i]()
   }
 
+  // Clear cached instruction since PC has changed
+  cpu.cachedInstruction = null
+
   updateUI()
   updateEditorExecutionLine()
 }
@@ -2043,11 +2046,23 @@ function handleQuit() {
   consolePrint('[Program terminated]')
 }
 
-function updateEditorExecutionLine() {
+async function updateEditorExecutionLine() {
   // Only highlight if we have debug info and editor is open
   if (!debugInfo || !debugInfo.lineMap) {
     clearExecutionLine()
     return
+  }
+
+  // Check if the current file matches the source filename in debug info
+  if (debugInfo.sourceFilename) {
+    const currentFile = await fs.getCurrentFile()
+    const currentFilename = currentFile ? currentFile.split('/').pop() : null
+
+    if (currentFilename !== debugInfo.sourceFilename) {
+      // Filename doesn't match, don't highlight
+      clearExecutionLine()
+      return
+    }
   }
 
   const pc = cpu.registers.PC
@@ -2118,6 +2133,56 @@ function handleReset() {
   updateUI()
   clearExecutionLine()
   consolePrint('[Emulator reset]')
+}
+
+async function handleEdit() {
+  // Open the source file from debug info
+  if (!debugInfo || !debugInfo.sourceFilename) {
+    consolePrint('[No source file information available]')
+    return
+  }
+
+  const filename = debugInfo.sourceFilename
+  consolePrint(`[Searching for ${filename}...]`)
+
+  try {
+    const filePath = await searchForFile('/', filename)
+
+    if (filePath) {
+      consolePrint(`[Found: ${filePath}]`)
+      await openFileInEditor(filePath)
+      await updateEditorExecutionLine()
+    } else {
+      consolePrint(`[File not found: ${filename}]`)
+    }
+  } catch (err) {
+    consolePrint(`[Error searching for file: ${err.message}]`)
+  }
+}
+
+// Search the entire filesystem for the file
+async function searchForFile(dirPath, filename) {
+    try {
+        const entries = await fs.readdir(dirPath)
+
+        for (const entry of entries) {
+            const fullPath = dirPath === '/' ? `/${entry.name}` : `${dirPath}/${entry.name}`
+
+            if (entry.type === "directory") {
+                // Recursively search subdirectories
+                const found = await searchForFile(fullPath, filename)
+                if (found) return found
+            } else if (entry.name === filename) {
+                // Found the file!
+                return fullPath
+            }
+        }
+    } catch (err) {
+        // Directory might not exist or not be readable, skip it
+        console.log(`Skipping ${dirPath}:`, err.message)
+    }
+
+    return null
 }
 
 function handleSpeedChange(e) {
@@ -3117,12 +3182,14 @@ async function handleResetFileSystem() {
 // Assembler Integration
 // ============================================================================
 
-function handleLoadProgram() {
+async function handleLoadProgram() {
   const editor = getEditor()
   const source = editor ? editor.getValue() : ''
+  const currentFilePath = await fs.getCurrentFile()
+  const filename = currentFilePath ? currentFilePath.split('/').pop() : null
 
   try {
-    const bytecode = assemble(source)
+    const bytecode = assemble(source, filename)
     const result = memory.loadBinary(bytecode)
     cpu.reset()
 
@@ -3165,9 +3232,9 @@ function handleLoadProgram() {
   }
 }
 
-function handleRunProgram() {
+async function handleRunProgram() {
   // Load the program
-  handleLoadProgram()
+  await handleLoadProgram()
 
   // Start execution
   if (!running) {
@@ -3186,11 +3253,11 @@ export async function initUI() {
   // Set up breakpoint change callback
   setBreakpointChangeCallback(updateBreakpointPCMap)
 
-  // Create memory
-  memory = new Memory(1024)
-
   // Create display
   display = new Display('display-canvas')
+
+  // Create memory with display reference
+  memory = new Memory(1024, display)
 
   // Initialize file system
   fs = new FileSystem()
@@ -3253,6 +3320,7 @@ export async function initUI() {
   document.getElementById('btn-step-back').addEventListener('click', handleStepBack)
   document.getElementById('btn-quit').addEventListener('click', handleQuit)
   document.getElementById('btn-reset').addEventListener('click', handleReset)
+  document.getElementById('btn-edit').addEventListener('click', handleEdit)
   document.getElementById('speed-select').addEventListener('change', handleSpeedChange)
   document.getElementById('memory-size-select').addEventListener('change', handleMemorySizeChange)
   document.getElementById('btn-load-program').addEventListener('click', handleLoadProgram)
@@ -3533,20 +3601,11 @@ export async function initUI() {
   // Initial UI update
   updateUI()
 
-  // Load hello.exe by default
+  // Load hello.bin by default
   try {
-    await cmdLoad(['/bin/hello.exe'])
+    await cmdLoad(['/bin/hello.bin'])
   } catch (err) {
-    // hello.exe might not exist, silently continue
-    console.log('Could not load hello.exe:', err)
-  }
-
-  // Open hello.asm in editor and highlight current execution line
-  try {
-    await openFileInEditor('/examples/hello.asm')
-    // Update execution line to show current PC position
-    updateEditorExecutionLine()
-  } catch (err) {
-    console.log('Could not open hello.asm:', err)
+    // hello.bin might not exist, silently continue
+    console.log('Could not load hello.bin:', err)
   }
 }

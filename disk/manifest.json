@@ -1,7 +1,7 @@
 {
-  "/bin/hello.exe": "bin/hello.exe",
-  "/bin/echo.exe": "bin/echo.exe",
-  "/bin/gol.exe": "bin/gol.exe",
+  "/bin/hello.bin": "bin/hello.bin",
+  "/bin/echo.bin": "bin/echo.bin",
+  "/bin/gol.bin": "bin/gol.bin",
   "/examples/hello.asm": "examples/hello.asm",
   "/examples/echo.asm": "examples/echo.asm",
   "/examples/loop.asm": "examples/loop.asm",

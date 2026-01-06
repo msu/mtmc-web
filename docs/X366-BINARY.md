@@ -2,7 +2,7 @@
 
 ## Overview
 
-X366 uses a simple binary format with a fixed header structure. All assembled programs follow this format to ensure proper loading and execution.
+X366 uses the ORC (Object Resource Container) binary format - a simple, structured binary format with a fixed header.
 
 ## Binary File Structure
 
@@ -240,10 +240,29 @@ Debug information is stored as **Section Type 0x01** and contains line number ma
 
 ### Debug Section Structure
 
-The debug section contains two subsections in order:
+The debug section contains three subsections in order:
 
-1. **Line Number Map**: PC address -> source line number
-2. **Symbol Table**: Label names -> addresses
+1. **Source Filename**: Null-terminated filename of the source .asm file
+2. **Line Number Map**: PC address -> source line number
+3. **Symbol Table**: Label names -> addresses
+
+### 0. Source Filename
+
+The first part of the debug section is the source filename:
+
+```
+Format: Null-terminated ASCII string
+```
+
+**Properties:**
+- Contains only the filename (not full path), e.g., "hello.asm"
+- Maximum length: 255 characters
+- Used to verify the correct source file is open in the editor
+
+**Example:**
+```
+'h' 'e' 'l' 'l' 'o' '.' 'a' 's' 'm' 0x00
+```
 
 ### 1. Line Number Map
 
@@ -269,7 +288,7 @@ Entry format (4 bytes each):
 0xFF 0xFF 0x00 0x00    ; End marker
 ```
 
-### 2. Symbol Table
+### 3. Symbol Table
 
 Maps label names to addresses. Uses null-terminated strings:
 
@@ -322,19 +341,23 @@ Code (0x0020-0x002F):
 
 Sections (0x0030+):
   0x0030  01                                  Section type: Debug Info
-  0x0031  00 00 00 28                         Section size: 40 bytes
+  0x0031  00 00 00 38                         Section size: 56 bytes
+
+  ; Source filename (12 bytes)
+  0x0035  65 78 61 6D 70 6C 65 2E             "example."
+  0x003D  61 73 6D 00                         "asm\0"
 
   ; Line map (12 bytes)
-  0x0035  00 20 00 05                         PC 0x0020 -> line 5
-  0x0039  00 24 00 06                         PC 0x0024 -> line 6
-  0x003D  00 28 00 0A                         PC 0x0028 -> line 10
-  0x0041  FF FF 00 00                         End marker
+  0x0041  00 20 00 05                         PC 0x0020 -> line 5
+  0x0045  00 24 00 06                         PC 0x0024 -> line 6
+  0x0049  00 28 00 0A                         PC 0x0028 -> line 10
+  0x004D  FF FF 00 00                         End marker
 
   ; Symbol table (28 bytes)
-  0x0045  00 20 00 6D 61 69 6E 00             main @ 0x0020
-  0x004D  00 30 00 6C 6F 6F 70 00             loop @ 0x0030
-  0x0055  FF FF 00 00                         End marker
+  0x0051  00 20 00 6D 61 69 6E 00             main @ 0x0020
+  0x0059  00 30 00 6C 6F 6F 70 00             loop @ 0x0030
+  0x0061  FF FF 00 00                         End marker
 
-  0x0059  00                                  Section type: End
-  0x005A  00 00 00 00                         Size: 0
+  0x0065  00                                  Section type: End
+  0x0066  00 00 00 00                         Size: 0
 ```

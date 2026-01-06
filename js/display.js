@@ -21,8 +21,8 @@ export class Display {
     this.canvas.width = DISPLAY_WIDTH
     this.canvas.height = DISPLAY_HEIGHT
 
-    // VRAM - one byte per pixel (0-3)
-    this.vram = new Uint8Array(DISPLAY_WIDTH * DISPLAY_HEIGHT)
+    // VRAM - pack 4 pixels per byte (2 bits each)
+    this.vram = new Uint8Array((DISPLAY_WIDTH * DISPLAY_HEIGHT) / 4)
 
     // Current drawing color
     this.currentColor = 3
@@ -47,8 +47,13 @@ export class Display {
   // Draw a pixel at (x, y) with current color
   drawPixel(x, y) {
     if (x >= 0 && x < DISPLAY_WIDTH && y >= 0 && y < DISPLAY_HEIGHT) {
-      const index = y * DISPLAY_WIDTH + x
-      this.vram[index] = this.currentColor
+      const pixelIndex = y * DISPLAY_WIDTH + x
+      const byteIndex = Math.floor(pixelIndex / 4)
+      const bitOffset = (pixelIndex % 4) * 2
+
+      // Clear 2 bits and set new color
+      this.vram[byteIndex] = (this.vram[byteIndex] & ~(0x03 << bitOffset)) |
+                              (this.currentColor << bitOffset)
     }
   }
 
@@ -136,9 +141,12 @@ export class Display {
   // Refresh display - copy VRAM to canvas
   refresh() {
     const data = this.imageData.data
+    const totalPixels = DISPLAY_WIDTH * DISPLAY_HEIGHT
 
-    for (let i = 0; i < this.vram.length; i++) {
-      const color = this.vram[i] & 0x03
+    for (let i = 0; i < totalPixels; i++) {
+      const byteIndex = Math.floor(i / 4)
+      const bitOffset = (i % 4) * 2
+      const color = (this.vram[byteIndex] >> bitOffset) & 0x03
       const rgb = this.hexToRgb(PALETTE[color])
 
       const idx = i * 4
@@ -199,32 +207,38 @@ export class Display {
         const pixels = imageData.data
 
         // Convert to 2-bit grayscale and write to VRAM
-        for (let i = 0; i < this.vram.length; i++) {
+        const totalPixels = DISPLAY_WIDTH * DISPLAY_HEIGHT
+        for (let i = 0; i < totalPixels; i++) {
           const idx = i * 4
           const r = pixels[idx]
           const g = pixels[idx + 1]
           const b = pixels[idx + 2]
           const a = pixels[idx + 3]
 
+          let color = 0
+
           // Skip transparent pixels
-          if (a < 128) {
-            this.vram[i] = 0
-            continue
+          if (a >= 128) {
+            // Convert to grayscale
+            const gray = (r + g + b) / 3
+
+            // Map to 2-bit color (0-3)
+            if (gray < 64) {
+              color = 0  // Darkest
+            } else if (gray < 128) {
+              color = 1  // Dark
+            } else if (gray < 192) {
+              color = 2  // Light
+            } else {
+              color = 3  // Lightest
+            }
           }
 
-          // Convert to grayscale
-          const gray = (r + g + b) / 3
-
-          // Map to 2-bit color (0-3)
-          if (gray < 64) {
-            this.vram[i] = 0  // Darkest
-          } else if (gray < 128) {
-            this.vram[i] = 1  // Dark
-          } else if (gray < 192) {
-            this.vram[i] = 2  // Light
-          } else {
-            this.vram[i] = 3  // Lightest
-          }
+          // Write packed pixel
+          const byteIndex = Math.floor(i / 4)
+          const bitOffset = (i % 4) * 2
+          this.vram[byteIndex] = (this.vram[byteIndex] & ~(0x03 << bitOffset)) |
+                                  (color << bitOffset)
         }
 
         // Refresh display

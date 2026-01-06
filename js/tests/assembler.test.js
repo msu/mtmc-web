@@ -1125,6 +1125,12 @@ ADD AX, 20
 
     let offset = sectionsOffset + 5 // Skip type and size fields
 
+    // Skip source filename (null-terminated string)
+    while (offset < bytecode.length && bytecode[offset] !== 0x00) {
+      offset++
+    }
+    offset++ // Skip null terminator
+
     // First line map entry: PC=0x0020 (first instruction)
     const pc1 = (bytecode[offset] << 8) | bytecode[offset + 1]
     const line1 = (bytecode[offset + 2] << 8) | bytecode[offset + 3]
@@ -1164,6 +1170,12 @@ loop:
                           bytecode[0x0F]
 
     let offset = sectionsOffset + 5
+
+    // Skip source filename (null-terminated string)
+    while (offset < bytecode.length && bytecode[offset] !== 0x00) {
+      offset++
+    }
+    offset++ // Skip null terminator
 
     // Skip line number map - find end marker 0xFFFF 0x0000
     while (offset < bytecode.length - 4) {
@@ -1244,6 +1256,12 @@ end:
                           bytecode[0x0F]
 
     let offset = sectionsOffset + 5
+
+    // Skip source filename (null-terminated string)
+    while (offset < bytecode.length && bytecode[offset] !== 0x00) {
+      offset++
+    }
+    offset++ // Skip null terminator
 
     // Skip to symbol table (past line map)
     while (offset < bytecode.length - 4) {

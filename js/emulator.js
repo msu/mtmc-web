@@ -296,7 +296,7 @@ export class Memory {
    * Create memory with specified size
    * @param {number} size - Memory size in bytes (1024, 2048, 4096, 8192, or 16384)
    */
-  constructor(size = 1024) {
+  constructor(size = 1024, display = null) {
     const validSizes = [1024, 2048, 4096, 8192, 16384]
     if (!validSizes.includes(size)) {
       throw new Error(`Invalid memory size: ${size}. Must be one of: ${validSizes.join(', ')}`)
@@ -304,6 +304,12 @@ export class Memory {
 
     this.size = size
     this.data = new Uint8Array(size)
+    this.display = display
+
+    // VRAM mapping: 0x4000-0x567F (5760 bytes)
+    this.vramStart = 0x4000
+    this.vramEnd = 0x567F
+
     // Note: Runtime memory 0x0000-0x001F is reserved and stays zero
     // The binary header is NOT loaded into runtime memory
   }
@@ -325,6 +331,16 @@ export class Memory {
    * Read byte from memory
    */
   readByte(address) {
+    // Allow VRAM access even if beyond physical memory
+    if (this.display && address >= this.vramStart && address <= this.vramEnd) {
+      const vramOffset = address - this.vramStart
+      const vram = this.display.getVRAM()
+      if (vramOffset < vram.length) {
+        return vram[vramOffset]
+      }
+      return 0
+    }
+
     if (address < 0 || address >= this.size) {
       throw new Error(`Memory read out of bounds: 0x${address.toString(16)}`)
     }
@@ -335,6 +351,17 @@ export class Memory {
    * Write byte to memory
    */
   writeByte(address, value) {
+    // Allow VRAM access even if beyond physical memory
+    if (this.display && address >= this.vramStart && address <= this.vramEnd) {
+      const vramOffset = address - this.vramStart
+      const vram = this.display.getVRAM()
+      if (vramOffset < vram.length) {
+        vram[vramOffset] = value & 0xFF
+        this.display.refresh()
+      }
+      return
+    }
+
     if (address < 0 || address >= this.size) {
       throw new Error(`Memory write out of bounds: 0x${address.toString(16)}`)
     }
@@ -345,6 +372,13 @@ export class Memory {
    * Read word (16-bit) from memory (big-endian)
    */
   readWord(address) {
+    // Allow VRAM access even if beyond physical memory
+    if (this.display && address >= this.vramStart && address + 1 <= this.vramEnd) {
+      const high = this.readByte(address)
+      const low = this.readByte(address + 1)
+      return (high << 8) | low
+    }
+
     if (address < 0 || address >= this.size - 1) {
       throw new Error(`Memory read out of bounds: 0x${address.toString(16)}`)
     }
@@ -358,6 +392,14 @@ export class Memory {
    * Write word (16-bit) to memory (big-endian)
    */
   writeWord(address, value) {
+    // Allow VRAM access even if beyond physical memory
+    if (this.display && address >= this.vramStart && address + 1 <= this.vramEnd) {
+      value = value & 0xFFFF
+      this.writeByte(address, (value >> 8) & 0xFF)
+      this.writeByte(address + 1, value & 0xFF)
+      return
+    }
+
     if (address < 0 || address >= this.size - 1) {
       throw new Error(`Memory write out of bounds: 0x${address.toString(16)}`)
     }
@@ -391,9 +433,12 @@ export class Memory {
     if (memorySize !== this.size) {
       this.size = memorySize
       this.data = new Uint8Array(memorySize)
+    } else {
+      // Zero out all memory before loading
+      this.data.fill(0)
     }
 
-    // Zero out reserved area (0x0000-0x001F)
+    // Zero out reserved area (0x0000-0x001F) - redundant after fill(0) but explicit
     for (let i = 0; i < 0x0020; i++) {
       this.data[i] = 0
     }
@@ -477,6 +522,14 @@ export class Memory {
     const symbols = {}  // Map of name → address
     let pos = 0
 
+    // Parse source filename (null-terminated string)
+    let sourceFilename = ''
+    while (pos < data.length && data[pos] !== 0) {
+      sourceFilename += String.fromCharCode(data[pos])
+      pos++
+    }
+    pos++  // Skip null terminator
+
     // Parse line map
     while (pos < data.length - 3) {
       const pc = (data[pos] << 8) | data[pos + 1]
@@ -513,7 +566,7 @@ export class Memory {
       symbols[name] = addr
     }
 
-    return { lineMap, symbols }
+    return { sourceFilename, lineMap, symbols }
   }
 
   /**
