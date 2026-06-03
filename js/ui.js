@@ -681,13 +681,7 @@ function updateMemoryView(scrollToAddr = null) {
     console.log(`Element with id 'mem-addr-${scrollToAddr}':`, element)
     if (element) {
       console.log('Found element, scrolling...')
-      var main = document.querySelector("main")
-      var pageTop = main.scrollTop
-      var pageLeft = main.scrollLeft
- 
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      main.scrollTop = pageTop
-      main.scrollLeft = pageLeft
+      scrollIntoContainerView(element);
     } else {
       // If exact address not found, scroll to nearest even address (for word-aligned views)
       const nearestEven = scrollToAddr & ~1
@@ -696,12 +690,24 @@ function updateMemoryView(scrollToAddr = null) {
       console.log(`Fallback element:`, fallbackElement)
       if (fallbackElement) {
         console.log('Found fallback element, scrolling...')
-        fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        scrollIntoContainerView(fallbackElement);
       } else {
         console.log('No element found to scroll to!')
       }
     }
   }
+}
+
+function scrollIntoContainerView(element) {
+    var main = document.querySelector("main");
+      var pageTop = main.scrollTop;
+      var pageLeft = main.scrollLeft;
+ 
+      if (!element) return;
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      main.scrollTop = pageTop;
+      main.scrollLeft = pageLeft;
 }
 
 function toggleMemoryDisplayMode() {
