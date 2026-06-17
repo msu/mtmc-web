@@ -700,14 +700,15 @@ function updateMemoryView(scrollToAddr = null) {
 
 function scrollIntoContainerView(element) {
     var main = document.querySelector("main");
-      var pageTop = main.scrollTop;
-      var pageLeft = main.scrollLeft;
- 
-      if (!element) return;
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
-      main.scrollTop = pageTop;
-      main.scrollLeft = pageLeft;
+    var pageTop = main.scrollTop;
+    var pageLeft = main.scrollLeft;
+
+    if (!element) return;
+    
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    main.scrollTop = pageTop;
+    main.scrollLeft = pageLeft;
 }
 
 function toggleMemoryDisplayMode() {
