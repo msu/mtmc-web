@@ -629,10 +629,12 @@ SHR BX, 2
 
     expect(mem.readByte(0x0020)).toBe(Opcode.SHL)
     expect(mem.readByte(0x0021)).toBe(0)  // AX
-    expect(mem.readWord(0x0022)).toBe(4)  // shift count (16-bit big-endian)
+    expect(mem.readByte(0x0022)).toBe(4)  // shift count, one byte
+    expect(mem.readByte(0x0023)).toBe(0)  // padding
     expect(mem.readByte(0x0024)).toBe(Opcode.SHR)
     expect(mem.readByte(0x0025)).toBe(1)  // BX
-    expect(mem.readWord(0x0026)).toBe(2)  // shift count (16-bit big-endian)
+    expect(mem.readByte(0x0026)).toBe(2)  // shift count, one byte
+    expect(mem.readByte(0x0027)).toBe(0)  // padding
   })
 })
 
@@ -1001,9 +1003,9 @@ describe('Default Shift Count', () => {
     // Both should produce identical bytecode
     expect(codeDefault[0x20]).toBe(codeExplicit[0x20]) // opcode
     expect(codeDefault[0x21]).toBe(codeExplicit[0x21]) // register
-    // Count is in bytes 2-3 (big-endian 16-bit)
-    expect(codeDefault[0x22]).toBe(0) // high byte
-    expect(codeDefault[0x23]).toBe(1) // low byte = 1
+    // Count is one byte in byte 2, byte 3 is padding
+    expect(codeDefault[0x22]).toBe(1) // count = 1
+    expect(codeDefault[0x23]).toBe(0) // padding
   })
 
   it('SHR without count should default to 1', () => {
@@ -1012,12 +1014,12 @@ describe('Default Shift Count', () => {
 
     expect(codeDefault[0x20]).toBe(codeExplicit[0x20])
     expect(codeDefault[0x21]).toBe(codeExplicit[0x21])
-    expect(codeDefault[0x23]).toBe(1) // low byte of count
+    expect(codeDefault[0x22]).toBe(1) // count = 1
   })
 
   it('SHL with explicit count should still work', () => {
     const code = assemble('SHL AX, 4')
-    expect(code[0x23]).toBe(4) // low byte of count = 4
+    expect(code[0x22]).toBe(4) // count = 4
   })
 
   it('SHL default should execute correctly', () => {

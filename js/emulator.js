@@ -57,8 +57,6 @@ export const Opcode = {
   NOT: 0x36,
   SHL: 0x37,
   SHR: 0x38,
-  TEST_REG_REG: 0x39,
-  TEST_REG_IMM: 0x3A,
   NEG: 0x3B,
 
   // Aliases for backwards compatibility with tests
@@ -68,8 +66,6 @@ export const Opcode = {
   AND_IMM: 0x31,  // Alias for AND_REG_IMM
   OR_REG: 0x32,
   XOR_REG: 0x34,
-  TEST_REG: 0x39,
-  TEST_IMM: 0x3A,
   ADD_MEM_REL: 0x29,
   SUB_MEM_REL: 0x2B,
   INC_MEM_REL: 0x1F,
@@ -141,6 +137,24 @@ export const RegName = ['AX', 'BX', 'CX', 'DX', 'SI', 'DI', 'SP', 'BP', 'HP']
 // ============================================================================
 // Registers
 // ============================================================================
+
+/**
+ * Signed overflow for a + b on 16-bit values. The sum overflows when both
+ * operands share a sign and the result takes the other sign.
+ */
+export function addOverflow(a, b, result) {
+  a &= 0xFFFF; b &= 0xFFFF; result &= 0xFFFF
+  return ((a ^ result) & (b ^ result) & 0x8000) !== 0
+}
+
+/**
+ * Signed overflow for a - b on 16-bit values. The difference overflows when
+ * the operands have different signs and the result takes the sign of b.
+ */
+export function subOverflow(a, b, result) {
+  a &= 0xFFFF; b &= 0xFFFF; result &= 0xFFFF
+  return ((a ^ b) & (a ^ result) & 0x8000) !== 0
+}
 
 export class Registers {
   constructor() {
@@ -742,7 +756,7 @@ export function decodeFromBytes(bytes) {
   if (opcode === Opcode.MOV_REG_REG || opcode === Opcode.ADD_REG_REG ||
       opcode === Opcode.SUB_REG_REG || opcode === Opcode.AND_REG_REG ||
       opcode === Opcode.OR_REG_REG || opcode === Opcode.XOR_REG_REG ||
-      opcode === Opcode.CMP_REG_REG || opcode === Opcode.TEST_REG_REG) {
+      opcode === Opcode.CMP_REG_REG) {
     result.dst = byte1
     result.src = byte2
     return result
@@ -752,10 +766,16 @@ export function decodeFromBytes(bytes) {
   if (opcode === Opcode.MOV_REG_IMM || opcode === Opcode.ADD_REG_IMM ||
       opcode === Opcode.SUB_REG_IMM || opcode === Opcode.AND_REG_IMM ||
       opcode === Opcode.OR_REG_IMM || opcode === Opcode.XOR_REG_IMM ||
-      opcode === Opcode.CMP_REG_IMM || opcode === Opcode.SHL || opcode === Opcode.SHR ||
-      opcode === Opcode.TEST_REG_IMM) {
+      opcode === Opcode.CMP_REG_IMM) {
     result.dst = byte1
     result.imm = (byte2 << 8) | byte3  // Little-endian in instruction bytes
+    return result
+  }
+
+  // Shifts carry the count as one byte in byte 2: [op][dst][count][0x00]
+  if (opcode === Opcode.SHL || opcode === Opcode.SHR) {
+    result.dst = byte1
+    result.count = byte2
     return result
   }
 
@@ -909,8 +929,6 @@ export function getInstructionName(opcode) {
     [Opcode.NEG]: 'NEG',
     [Opcode.SHL]: 'SHL',
     [Opcode.SHR]: 'SHR',
-    [Opcode.TEST_REG_REG]: 'TEST',
-    [Opcode.TEST_REG_IMM]: 'TEST',
     [Opcode.CMP_REG_REG]: 'CMP',
     [Opcode.CMP_REG_IMM]: 'CMP',
     [Opcode.CMP_MEM]: 'CMP',
@@ -1070,7 +1088,7 @@ export class CPU {
   /**
    * Update ZF and SF flags based on result
    */
-  updateFlags(result, bits = 16) {
+  updateFlags(result, bits = 16, overflow = false) {
     const mask = bits === 16 ? 0xFFFF : 0xFF
     const signBit = bits === 16 ? 0x8000 : 0x80
 
@@ -1078,6 +1096,7 @@ export class CPU {
 
     this.setFlag('ZF', result === 0)
     this.setFlag('SF', (result & signBit) !== 0)
+    this.setFlag('OF', overflow)
 
     return result
   }
@@ -1263,7 +1282,7 @@ export class CPU {
 
         // Set flags
         this.setFlag('CF', result > 0xFFFF)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(a, b, result))
 
         this.setReg(instr.dst, result)
         this.incIP(instr.size)
@@ -1275,7 +1294,7 @@ export class CPU {
         const result = a + instr.imm
 
         this.setFlag('CF', result > 0xFFFF)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(a, instr.imm, result))
 
         this.setReg(instr.dst, result)
         this.incIP(instr.size)
@@ -1288,7 +1307,7 @@ export class CPU {
         const result = a + b
 
         this.setFlag('CF', result > 0xFFFF)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(a, b, result))
 
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
@@ -1303,7 +1322,7 @@ export class CPU {
         const result = a + b
 
         this.setFlag('CF', result > 0xFFFF)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(a, b, result))
 
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
@@ -1316,7 +1335,7 @@ export class CPU {
         const result = a - b
 
         this.setFlag('CF', b > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, b, result))
 
         this.setReg(instr.dst, result)
         this.incIP(instr.size)
@@ -1328,7 +1347,7 @@ export class CPU {
         const result = a - instr.imm
 
         this.setFlag('CF', instr.imm > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, instr.imm, result))
 
         this.setReg(instr.dst, result)
         this.incIP(instr.size)
@@ -1341,7 +1360,7 @@ export class CPU {
         const result = a - b
 
         this.setFlag('CF', b > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, b, result))
 
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
@@ -1356,7 +1375,7 @@ export class CPU {
         const result = a - b
 
         this.setFlag('CF', b > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, b, result))
 
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
@@ -1366,7 +1385,7 @@ export class CPU {
       case Opcode.INC_REG: {
         const value = this.getReg(instr.reg)
         const result = value + 1
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(value, 1, result))
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
         break
@@ -1375,7 +1394,7 @@ export class CPU {
       case Opcode.DEC_REG: {
         const value = this.getReg(instr.reg)
         const result = value - 1
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(value, 1, result))
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
         break
@@ -1385,7 +1404,7 @@ export class CPU {
         const value = this.memory.readWord(instr.addr)
         const result = (value + 1) & 0xFFFF
         this.writeMemory(instr.addr, result)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(value, 1, result))
         this.incIP(instr.size)
         break
       }
@@ -1394,7 +1413,7 @@ export class CPU {
         const value = this.memory.readWord(instr.addr)
         const result = (value - 1) & 0xFFFF
         this.writeMemory(instr.addr, result)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(value, 1, result))
         this.incIP(instr.size)
         break
       }
@@ -1405,7 +1424,7 @@ export class CPU {
         const value = this.memory.readWord(addr)
         const result = (value + 1) & 0xFFFF
         this.writeMemory(addr, result)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, addOverflow(value, 1, result))
         this.incIP(instr.size)
         break
       }
@@ -1416,7 +1435,7 @@ export class CPU {
         const value = this.memory.readWord(addr)
         const result = (value - 1) & 0xFFFF
         this.writeMemory(addr, result)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(value, 1, result))
         this.incIP(instr.size)
         break
       }
@@ -1480,7 +1499,7 @@ export class CPU {
         const result = a - b
 
         this.setFlag('CF', b > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, b, result))
 
         this.incIP(instr.size)
         break
@@ -1491,7 +1510,7 @@ export class CPU {
         const result = a - instr.imm
 
         this.setFlag('CF', instr.imm > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, instr.imm, result))
 
         this.incIP(instr.size)
         break
@@ -1503,7 +1522,7 @@ export class CPU {
         const result = a - b
 
         this.setFlag('CF', b > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, b, result))
 
         this.incIP(instr.size)
         break
@@ -1517,7 +1536,7 @@ export class CPU {
         const result = a - b
 
         this.setFlag('CF', b > a)
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(a, b, result))
 
         this.incIP(instr.size)
         break
@@ -1642,23 +1661,6 @@ export class CPU {
         break
       }
 
-      case Opcode.TEST_REG_REG: {
-        const a = this.getReg(instr.dst)
-        const b = this.getReg(instr.src)
-        const result = a & b
-        this.updateFlags(result, 16)
-        this.incIP(instr.size)
-        break
-      }
-
-      case Opcode.TEST_REG_IMM: {
-        const a = this.getReg(instr.dst)
-        const result = a & instr.imm
-        this.updateFlags(result, 16)
-        this.incIP(instr.size)
-        break
-      }
-
       case Opcode.OR_REG_REG: {
         const a = this.getReg(instr.dst)
         const b = this.getReg(instr.src)
@@ -1709,7 +1711,7 @@ export class CPU {
       case Opcode.NEG: {
         const value = this.getReg(instr.reg)
         const result = (-value) & 0xFFFF
-        this.updateFlags(result, 16)
+        this.updateFlags(result, 16, subOverflow(0, value, result))
         this.setReg(instr.reg, result)
         this.incIP(instr.size)
         break
@@ -1748,7 +1750,7 @@ export class CPU {
 
       case Opcode.SHL: {
         const value = this.getReg(instr.dst)
-        const count = instr.imm & 0x0F  // Limit to 15
+        const count = instr.count & 0x0F  // Limit to 15
         const result = (value << count) & 0xFFFF
         this.updateFlags(result, 16)
         this.setReg(instr.dst, result)
@@ -1758,7 +1760,7 @@ export class CPU {
 
       case Opcode.SHR: {
         const value = this.getReg(instr.dst)
-        const count = instr.imm & 0x0F  // Limit to 15
+        const count = instr.count & 0x0F  // Limit to 15
         const result = value >>> count
         this.updateFlags(result, 16)
         this.setReg(instr.dst, result)

@@ -27,7 +27,7 @@ export function initializeMonaco() {
         keywords: [
           'MOV', 'MOVB', 'ADD', 'SUB', 'MUL', 'DIV', 'INC', 'DEC',
           'AND', 'OR', 'XOR', 'NOT', 'NEG', 'SHL', 'SHR',
-          'CMP', 'TEST',
+          'CMP',
           'SETE', 'SETNE', 'SETL', 'SETG', 'SETLE', 'SETGE',
           'JMP', 'JE', 'JNE', 'JZ', 'JNZ', 'JG', 'JGE', 'JL', 'JLE', 'JA', 'JAE', 'JB', 'JBE',
           'PUSH', 'POP', 'CALL', 'RET',
@@ -69,7 +69,7 @@ export function initializeMonaco() {
             [/\b(?:EXIT|PRINT_CHAR|PRINT_INT|PRINT_STRING|READ_CHAR|READ_INT|READ_STRING|CLEAR_SCREEN|DRAW_PIXEL|DRAW_RECT|DRAW_LINE|READ_PIXEL|FLUSH_SCREEN|SBRK|MALLOC|FREE|ATOI|SLEEP|OPEN_FILE|READ_FILE|WRITE_FILE|CLOSE_FILE)\b/i, 'keyword.syscall'],
 
             // Instructions
-            [/\b(?:MOV|MOVB|ADD|SUB|MUL|DIV|INC|DEC|AND|OR|XOR|NOT|SHL|SHR|CMP|TEST|SETE|SETNE|SETL|SETG|SETLE|SETGE|JMP|JE|JNE|JZ|JNZ|JG|JGE|JL|JLE|JA|JAE|JB|JBE|PUSH|POP|CALL|RET|SYSCALL|NOP|HLT|DB|DW|DUP)\b/i, 'keyword'],
+            [/\b(?:MOV|MOVB|ADD|SUB|MUL|DIV|INC|DEC|AND|OR|XOR|NOT|SHL|SHR|CMP|SETE|SETNE|SETL|SETG|SETLE|SETGE|JMP|JE|JNE|JZ|JNZ|JG|JGE|JL|JLE|JA|JAE|JB|JBE|PUSH|POP|CALL|RET|SYSCALL|NOP|HLT|DB|DW|DUP)\b/i, 'keyword'],
 
             // Registers
             [/\b(?:AX|BX|CX|DX|SI|DI|SP|BP|AL|BL|CL|DL|SIL|DIL)\b/i, 'variable.predefined'],
@@ -101,7 +101,7 @@ export function initializeMonaco() {
             // Instructions
             ...['MOV', 'MOVB', 'ADD', 'SUB', 'MUL', 'DIV', 'INC', 'DEC',
                 'AND', 'OR', 'XOR', 'NOT', 'NEG', 'SHL', 'SHR',
-                'CMP', 'TEST',
+                'CMP',
                 'SETE', 'SETNE', 'SETL', 'SETG', 'SETLE', 'SETGE',
                 'JMP', 'JE', 'JNE', 'JZ', 'JNZ', 'JG', 'JGE', 'JL', 'JLE', 'JA', 'JAE', 'JB', 'JBE',
                 'PUSH', 'POP', 'CALL', 'RET',

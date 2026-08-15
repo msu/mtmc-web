@@ -53,7 +53,7 @@ export class AsmDebugger {
     const lines = code.split('\n')
     const highlighted = []
 
-    const keywords = /\b(MOV|ADD|SUB|MUL|DIV|INC|DEC|AND|OR|XOR|NOT|NEG|SHL|SHR|CMP|TEST|SETE|SETNE|SETL|SETG|SETLE|SETGE|JMP|JE|JNE|JG|JL|JGE|JLE|JZ|JNZ|CALL|RET|PUSH|POP|SYSCALL|NOP|HLT)\b/gi
+    const keywords = /\b(MOV|ADD|SUB|MUL|DIV|INC|DEC|AND|OR|XOR|NOT|NEG|SHL|SHR|CMP|SETE|SETNE|SETL|SETG|SETLE|SETGE|JMP|JE|JNE|JG|JL|JGE|JLE|JZ|JNZ|CALL|RET|PUSH|POP|SYSCALL|NOP|HLT)\b/gi
     const registers = /\b(AX|BX|CX|DX|SI|DI|SP|BP|IP|IR|DR|HP|CB)\b/gi
     const numbers = /\b(0x[0-9A-Fa-f]+|\d+)\b/g
     const labels = /^([a-zA-Z_][a-zA-Z0-9_]*):$/gm

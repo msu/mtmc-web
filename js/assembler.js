@@ -217,7 +217,11 @@ function parseDataDirective(directive, data, lineNum) {
     const dupMatch = item.match(/^(\d+)\s+DUP\s*\((.+)\)$/i)
     if (dupMatch) {
       const count = parseInt(dupMatch[1], 10)
-      const value = parseDataValue(dupMatch[2].trim(), directive, lineNum)
+      const operand = dupMatch[2].trim()
+      // ? marks the space as uninitialized, which assembles as zero
+      const value = operand === '?'
+        ? (directive === 'DW' ? [0x00, 0x00] : [0x00])
+        : parseDataValue(operand, directive, lineNum)
 
       for (let i = 0; i < count; i++) {
         bytes.push(...value)
@@ -873,21 +877,6 @@ function encodeInstruction(instruction, operands, labels, currentAddress, lineNu
       break
     }
 
-    case 'TEST': {
-      const dst = ops[0]
-      const src = ops[1]
-
-      if (dst.type === 'register' && src.type === 'register') {
-        encode4Byte(Opcode.TEST_REG_REG, dst.value, src.value, 0)
-      } else if (dst.type === 'register' && src.type === 'immediate') {
-        const imm = src.value & 0xFFFF
-        encode4Byte(Opcode.TEST_REG_IMM, dst.value, (imm >> 8) & 0xFF, imm & 0xFF)
-      } else {
-        throwError(`Invalid TEST operands`)
-      }
-      break
-    }
-
     case 'OR': {
       const dst = ops[0]
       const src = ops[1]
@@ -992,8 +981,8 @@ function encodeInstruction(instruction, operands, labels, currentAddress, lineNu
       // Default count to 1 if not provided (x86 compatible)
       const count = ops[1] || { type: 'immediate', value: 1 }
       if (dst.type === 'register' && count.type === 'immediate') {
-        const imm = count.value & 0xFFFF
-        encode4Byte(Opcode.SHL, dst.value, (imm >> 8) & 0xFF, imm & 0xFF)
+        // The count is a single byte in byte 2, not a 16-bit immediate
+        encode4Byte(Opcode.SHL, dst.value, count.value & 0xFF, 0x00)
       } else {
         throwError(`Invalid SHL operands`)
       }
@@ -1005,8 +994,8 @@ function encodeInstruction(instruction, operands, labels, currentAddress, lineNu
       // Default count to 1 if not provided (x86 compatible)
       const count = ops[1] || { type: 'immediate', value: 1 }
       if (dst.type === 'register' && count.type === 'immediate') {
-        const imm = count.value & 0xFFFF
-        encode4Byte(Opcode.SHR, dst.value, (imm >> 8) & 0xFF, imm & 0xFF)
+        // The count is a single byte in byte 2, not a 16-bit immediate
+        encode4Byte(Opcode.SHR, dst.value, count.value & 0xFF, 0x00)
       } else {
         throwError(`Invalid SHR operands`)
       }

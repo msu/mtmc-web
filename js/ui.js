@@ -7,7 +7,6 @@ import { FileSystem } from './filesystem.js'
 import { OS } from './os.js'
 import { Display } from './display.js'
 import { initializeMonaco, getEditor, setExecutionLine, clearExecutionLine, getBreakpoints, setBreakpointChangeCallback, createCmmEditor, getCmmEditor, setCmmExecutionLine, clearCmmExecutionLine } from './monaco-setup.js'
-import { initRemote } from './remote.js'
 
 // ============================================================================
 // State
@@ -810,6 +809,7 @@ async function handleConsoleInput(inputText) {
     'load': cmdLoad,
     'set': cmdSet,
     'help': cmdHelp,
+    'docs': cmdDocs,
     'clear': cmdClear,
     'reset': cmdReset,
     'debug': cmdDebug,
@@ -898,7 +898,7 @@ async function handleConsoleInput(inputText) {
   const asmInstructions = [
     'MOV', 'MOVB', 'ADD', 'SUB', 'MUL', 'DIV', 'INC', 'DEC',
     'AND', 'OR', 'XOR', 'NOT', 'SHL', 'SHR',
-    'CMP', 'TEST',
+    'CMP',
     'JMP', 'JE', 'JNE', 'JZ', 'JNZ', 'JG', 'JGE', 'JL', 'JLE', 'JA', 'JAE', 'JB', 'JBE',
     'PUSH', 'POP', 'CALL', 'RET',
     'SYSCALL', 'NOP', 'HLT'
@@ -1502,7 +1502,7 @@ async function handleTabCompletion() {
     // List of available commands
     const commands = [
       'pwd', 'cd', 'ls', 'mkdir', 'rm', 'cat', 'open',
-      'compile', 'cc', 'asm', 'load', 'set', 'help', 'clear', 'reset', 'debug'
+      'compile', 'cc', 'asm', 'load', 'set', 'help', 'docs', 'clear', 'reset', 'debug'
     ]
 
     // Get executables from /bin
@@ -1683,6 +1683,7 @@ function cmdHelp(args) {
   consolePrint('  reset            - Reset emulator (clear memory)')
   consolePrint('  debug            - Toggle debug mode on/off')
   consolePrint('  help             - Show this help')
+  consolePrint('  docs             - Open the documentation in a new tab')
   consolePrint('')
   consolePrint('Syscalls (use name or number):')
   consolePrint('  SYSCALL EXIT / SYSCALL 0')
@@ -1698,6 +1699,16 @@ function cmdHelp(args) {
   consolePrint('  SYSCALL REFRESH / SYSCALL 17')
   consolePrint('')
   consolePrint('You can also type assembly instructions directly.')
+}
+
+// Open the documentation index in a new tab
+function cmdDocs(args) {
+  const opened = window.open('docs/index.html', '_blank')
+  if (opened) {
+    consolePrint('[Opening documentation in a new tab]')
+  } else {
+    consolePrint('[Popup blocked - open docs/index.html manually]')
+  }
 }
 
 // Clear console
@@ -3552,17 +3563,7 @@ export async function initUI() {
   // Create memory with display reference
   memory = new Memory(1024, display)
 
-  // Create a minimal CPU for remote mode to set register values on
   cpu = new CPU(memory, null)
-
-  // Check for remote mode (served by IntelliJ plugin)
-  if (initRemote(updateUI, consolePrint, display, memory, cpu)) {
-    // Remote mode is active — skip local filesystem, monaco, etc.
-    // Wire memory mode button
-    const memBtn = document.getElementById('memory-mode-btn')
-    if (memBtn) memBtn.addEventListener('click', toggleMemoryDisplayMode)
-    return
-  }
 
   // Initialize file system
   fs = new FileSystem()
@@ -3921,7 +3922,7 @@ export async function initUI() {
   // Initialize display
   consolePrint('MTMC-16 x366 Emulator')
   consolePrint('Ready.')
-  consolePrint('Type "help" for available commands.')
+  consolePrint('type help for more information or docs to open the documentation')
   consolePrint('')
 
   // Load file system and show explorer

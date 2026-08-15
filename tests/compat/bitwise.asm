@@ -1,5 +1,5 @@
 ; Cross-Platform Test 07: Bitwise Operations
-; Tests AND, OR, XOR, NOT, SHL, SHR, TEST
+; Tests AND, OR, XOR, NOT, SHL, SHR
 ; Expected output (decimal): 8, 15, 7, 65530, 32, 4, 255, 240
 
 ; Test 1: AND (12 & 10 = 8)
@@ -43,26 +43,6 @@ SYSCALL PRINT_CHAR
 ; Test 6: SHR (16 >> 2 = 4)
 MOV AX, 16
 SHR AX, 2
-SYSCALL PRINT_INT
-MOV AX, 10
-SYSCALL PRINT_CHAR
-
-; Test 7: TEST does not modify register (0xFF & 0x0F, AX stays 0xFF)
-MOV AX, 0xFF
-TEST AX, 0x0F
-SYSCALL PRINT_INT
-MOV AX, 10
-SYSCALL PRINT_CHAR
-
-; Test 8: TEST sets ZF correctly (0xF0 & 0x0F = 0, so JZ taken)
-MOV AX, 0xF0
-TEST AX, 0x0F
-JZ test8_zero
-MOV AX, 999     ; should not reach here
-JMP test8_done
-test8_zero:
-MOV AX, 0xF0    ; AX still 0xF0, print it to confirm unchanged
-test8_done:
 SYSCALL PRINT_INT
 MOV AX, 10
 SYSCALL PRINT_CHAR

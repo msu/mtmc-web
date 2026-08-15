@@ -5,7 +5,7 @@ just enough of C to write simple programs with functions, arrays, and basic I/O.
 
 ### Types
 
-C-- supports two types:
+C-- supports two core types:
 
 * `int` — 16-bit signed integer (one word)
 * `char` — 8-bit unsigned character (one byte)
