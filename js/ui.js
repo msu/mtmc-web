@@ -1090,9 +1090,9 @@ async function cmdCompile(args) {
   if (args.length === 0) {
     consolePrint('Usage: compile <source.asm|source.c> [output.x366]')
     consolePrint('Examples:')
-    consolePrint('  compile /src/hello.asm')
-    consolePrint('  compile /src/factorial.c')
-    consolePrint('  compile /src/hello.asm /bin/hello.x366')
+    consolePrint('  compile /src/examples/hello.asm')
+    consolePrint('  compile /src/examples/factorial.c')
+    consolePrint('  compile /src/examples/hello.asm /bin/hello.x366')
     return
   }
 
@@ -1241,7 +1241,7 @@ async function cmdLoad(args) {
     consolePrint('Examples:')
     consolePrint('  load hello')
     consolePrint('  load /bin/hello')
-    consolePrint('  load /src/hello.asm')
+    consolePrint('  load /src/examples/hello.asm')
     consolePrint('  load echo "arg1 arg2 arg3"')
     return
   }

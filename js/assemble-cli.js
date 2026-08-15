@@ -9,7 +9,7 @@ const args = process.argv.slice(2)
 
 if (args.length < 2) {
   console.error('Usage: node js/assemble-cli.js <input.asm> <output.bin>')
-  console.error('Example: node js/assemble-cli.js disk/src/gol.asm bin/gol.bin')
+  console.error('Example: node js/assemble-cli.js disk/src/examples/gol.asm bin/gol.bin')
   process.exit(1)
 }
 

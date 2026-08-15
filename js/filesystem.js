@@ -568,7 +568,7 @@ export class FileSystem {
 
   // Compatibility methods for existing code
   async getCurrentFile() {
-    return await this.getMetadata('currentFile') || '/src/hello.asm'
+    return await this.getMetadata('currentFile') || '/src/examples/hello.asm'
   }
 
   async setCurrentFile(path) {
